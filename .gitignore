@@ -1,0 +1,36 @@
+# Bytecode files
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+ENV/
+env/
+.venv/
+
+# Flask/Dotenv
+.flaskenv
+.env
+.env.*
+
+# Editor/IDE files
+.vscode/
+*.swp
+*.swo
+*.bak
+*.tmp
+*~
+
+# macOS
+.DS_Store
+
+# Testing / coverage
+.coverage
+htmlcov/
+.cache/
+
+# Mypy / lint tools
+.mypy_cache/
+.pyright/
+.pyre/
+ruff_cache/
