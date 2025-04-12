@@ -28,6 +28,7 @@ env/
 .coverage
 htmlcov/
 .cache/
+logs/
 
 # Mypy / lint tools
 .mypy_cache/
