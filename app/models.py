@@ -1,11 +1,14 @@
 from datetime import datetime, timezone
 from hashlib import md5
+from time import time
 from typing import Optional
 
+import jwt
 import sqlalchemy as sa
 import sqlalchemy.orm as so
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from app import app
 from app import db
 from app import login
 from flask_login import UserMixin
@@ -79,6 +82,24 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
+
+    def get_reset_password_token(self, expires_in=600):
+        return jwt.encode(
+            {"reset_password": self.id, "exp": time() + expires_in},
+            app.config["SECRET_KEY"],
+            algorithm="HS256",
+        )
+
+    @staticmethod
+    def verify_reset_password_token(token):
+        try:
+            # If the token is valid, the value of reset_password from the token's payload is the ID of the user
+            id = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])[
+                "reset_password"
+            ]
+        except:
+            return
+        return db.session.get(User, id)
 
     def follow(self, user):
         if not self.is_following(user):
