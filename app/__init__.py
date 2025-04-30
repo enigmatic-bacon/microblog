@@ -4,6 +4,7 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_migrate import Migrate
+from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import os
 
@@ -51,5 +52,6 @@ if not app.debug:
         app.logger.setLevel(logging.INFO)
         app.logger.info("Microblog startup")
 mail = Mail(app)
+moment = Moment(app)
 
 from app import routes, models, errors  # noqa
