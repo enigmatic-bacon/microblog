@@ -35,3 +35,7 @@ logs/
 .pyright/
 .pyre/
 ruff_cache/
+
+# Localization generated via "pybabel extract -F babel.cfg -k _l -o messages.pot ."
+*.pot
+*.mo

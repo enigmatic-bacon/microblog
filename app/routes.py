@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
-from flask import render_template, flash, redirect, request, url_for
+from flask import g, render_template, flash, redirect, request, url_for
+from flask_babel import _, get_locale
 from flask_login import current_user, login_required, login_user, logout_user
 import sqlalchemy as sa
 from urllib.parse import urlsplit
@@ -26,6 +27,7 @@ def before_request():
         current_user.last_seen = datetime.now(timezone.utc)
         # We don't need to add user here because we know it's already in the db (else there wouldn't be a current user)
         db.session.commit()
+    g.locale = str(get_locale())
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -37,7 +39,7 @@ def index():
         post = Post(body=form.post.data, author=current_user)
         db.session.add(post)
         db.session.commit()
-        flash("Your post is now live!")
+        flash(_("Your post is now live!"))
         # The redirect here is useful to avoid refreshing a post request, which would have the user re-submit a post. Instead, redirect to a GET so refresh works
         # Posts/Redirect/Get pattern
         return redirect(url_for("index"))
@@ -69,7 +71,7 @@ def edit_profile():
         current_user.username = form.username.data
         current_user.about_me = form.about_me.data
         db.session.commit()
-        flash("Your changes have been saved.")
+        flash(_("Your changes have been saved."))
         return redirect(url_for("edit_profile"))
     elif request.method == "GET":
         form.username.data = current_user.username
@@ -107,7 +109,7 @@ def login():
             sa.select(User).where(User.username == form.username.data)
         )
         if user is None or not user.check_password(form.password.data):
-            flash("Invalid username or password")
+            flash(_("Invalid username or password"))
             return redirect(url_for("login"))
         login_user(user, remember=form.remember_me.data)
         # If a non-logged in-user tries to access /index, it'll add the query to url as such: /login?next=/index
@@ -137,7 +139,7 @@ def register():
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        flash("Good job, you signed up. Whoopie.")
+        flash(_("Good job, you signed up. Whoopie."))
         return redirect(url_for("login"))
     return render_template("register.html", title="Register", form=form)
 
@@ -183,16 +185,18 @@ def follow(username):
     if form.validate_on_submit():
         user = db.session.scalar(sa.select(User).where(User.username == username))
         if user is None:
-            flash(f"User {username} not found.")
+            flash(_("User %(username)s not found.", username=username))
             return redirect(url_for("index"))
         if user == current_user:
             flash(
-                "You're so vain. You can't follow yourself. Get your head out of your ass."
+                _(
+                    "You're so vain. You can't follow yourself. Get your head out of your ass."
+                )
             )
             return redirect(url_for("user", username=username))
         current_user.follow(user)
         db.session.commit()
-        flash(f"You are now following {username}!")
+        flash(_("You are now following %(username)s!", username=username))
         return redirect(url_for("user", username=username))
     else:
         return redirect(url_for("index"))
@@ -205,14 +209,14 @@ def unfollow(username):
     if form.validate_on_submit():
         user = db.session.scalar(sa.select(User).where(User.username == username))
         if user is None:
-            flash(f"User {username} not found.")
+            flash(_("User %(username)s not found.", username=username))
             return redirect(url_for("index"))
         if user == current_user:
-            flash("You can't unfollow yourself.")
+            flash(_("You can't unfollow yourself."))
             return redirect(url_for("user", username=username))
         current_user.unfollow(user)
         db.session.commit()
-        flash(f"You are not following {username}.")
+        flash(_("You are not following %(username)s.", username=username))
         return redirect(url_for("user", username=username))
     else:
         return redirect(url_for("index"))
@@ -229,7 +233,7 @@ def reset_password(token):
     if form.validate_on_submit():
         user.set_password(form.password.data)
         db.session.commit()
-        flash("Your password has been reset.")
+        flash(_("Your password has been reset."))
         return redirect(url_for("login"))
     return render_template("reset_password.html", form=form)
 
@@ -243,7 +247,7 @@ def reset_password_request():
         user = db.session.scalar(sa.select(User).where(User.email == form.email.data))
         if user:
             send_password_reset_email(user)
-        flash("Check your email for the instructions to reset your password")
+        flash(_("Check your email for the instructions to reset your password"))
         return redirect(url_for("login"))
     return render_template(
         "reset_password_request.html", title="Reset Password", form=form
