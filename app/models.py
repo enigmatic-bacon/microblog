@@ -171,6 +171,7 @@ class Post(db.Model):
     # A foreign key references a primary key of another table
     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
     author: so.Mapped[User] = so.relationship(back_populates="posts")
+    language: so.Mapped[Optional[str]] = so.mapped_column(sa.String(5))
 
     def __repr__(self):
         return f"<Post {self.body}>"

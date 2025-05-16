@@ -5,6 +5,7 @@ from flask_babel import _, get_locale
 from flask_login import current_user, login_required, login_user, logout_user
 import sqlalchemy as sa
 from urllib.parse import urlsplit
+from langdetect import detect, LangDetectException
 
 from app import app
 from app import db
@@ -19,6 +20,7 @@ from app.forms import (
     ResetPasswordRequestForm,
 )
 from app.models import Post, User
+from app.translate import translate
 
 
 @app.before_request
@@ -36,7 +38,11 @@ def before_request():
 def index():
     form = PostForm()
     if form.validate_on_submit():
-        post = Post(body=form.post.data, author=current_user)
+        try:
+            language = detect(form.post.data)
+        except LangDetectException:
+            language = ""
+        post = Post(body=form.post.data, author=current_user, language=language)
         db.session.add(post)
         db.session.commit()
         flash(_("Your post is now live!"))
@@ -252,3 +258,12 @@ def reset_password_request():
     return render_template(
         "reset_password_request.html", title="Reset Password", form=form
     )
+
+
+@app.route("/translate", methods=["POST"])
+@login_required
+def translate_text():
+    data = request.get_json()
+    return {
+        "text": translate(data["text"], data["source_language"], data["dest_language"])
+    }
